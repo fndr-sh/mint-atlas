@@ -1,5 +1,8 @@
 ---
 title: Mint Atlas
+Live Demo: https://neevpshah-mint-atlas.hf.space  
+Demo Video: https://youtu.be/fHSmms7yFiM  
+GitHub: https://github.com/fndr-sh/mint-atlas
 emoji: 🪙
 colorFrom: yellow
 colorTo: gray
