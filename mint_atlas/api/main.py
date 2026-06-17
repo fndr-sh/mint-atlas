@@ -2,18 +2,36 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from mint_atlas.data.synthetic import export_graph_json, generate_synthetic_mint, load_sample_dataset
 from mint_atlas.graph.builder import assign_chronological_sequence
-from mint_atlas.graph.die_link import CoinObservation
 from mint_atlas.inference.classical import classical_topological, classical_wear_ordering, evaluate_chronology
 from mint_atlas.inference.pipeline import reconstruct_chronology
+
+
+def _resolve_frontend_dist() -> Path | None:
+    """Find built frontend — must check cwd because package installs to site-packages."""
+    env_path = os.getenv("MINT_ATLAS_FRONTEND")
+    candidates = [
+        Path(env_path) if env_path else None,
+        Path.cwd() / "frontend" / "dist",
+        Path(__file__).resolve().parents[2] / "frontend" / "dist",
+    ]
+    for candidate in candidates:
+        if candidate and (candidate / "index.html").exists():
+            return candidate
+    return None
+
+
+_frontend = _resolve_frontend_dist()
 
 app = FastAPI(
     title="Mint Atlas API",
@@ -155,17 +173,24 @@ def methodology():
     }
 
 
-# Serve frontend build if present (must be last — catch-all)
-_frontend = Path(__file__).parent.parent.parent / "frontend" / "dist"
+@app.get("/")
+def serve_root():
+    if _frontend:
+        return FileResponse(_frontend / "index.html")
+    return {"service": "mint-atlas", "health": "/health", "docs": "/docs"}
 
 
 @app.on_event("startup")
 def _log_frontend_status():
     import logging
+
     logging.getLogger("mint_atlas").info(
-        "Frontend dist %s", "found" if _frontend.exists() else "missing"
+        "Frontend dist: %s",
+        str(_frontend) if _frontend else "missing",
     )
 
 
-if _frontend.exists():
-    app.mount("/", StaticFiles(directory=str(_frontend), html=True), name="frontend")
+if _frontend:
+    assets_dir = _frontend / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
