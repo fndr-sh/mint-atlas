@@ -120,26 +120,22 @@ export default function GraphView({ nodes, edges, wearTransfers, chronology }: P
 
     const node = g
       .append("g")
-      .selectAll("g")
+      .selectAll<SVGGElement, SimNode>("g")
       .data(simNodes)
       .join("g")
       .call(
-        d3
-          .drag<SVGGElement, SimNode>()
-          .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on("drag", (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          })
+        d3.drag<SVGGElement, SimNode>().on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        }).on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        }).on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }) as unknown as (selection: d3.Selection<SVGGElement, SimNode, SVGGElement, unknown>) => void
       );
 
     node
