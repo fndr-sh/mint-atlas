@@ -12,4 +12,4 @@ if [ ! -f "checkpoints/mint_atlas_gnn.pt" ]; then
   mint-atlas train --epochs 40
 fi
 
-exec mint-atlas serve --host 0.0.0.0 --port "${PORT:-8000}"
+exec mint-atlas serve --host 0.0.0.0 --port "${PORT:-7860}"
